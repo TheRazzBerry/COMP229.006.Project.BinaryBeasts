@@ -8,6 +8,8 @@ var app = express();
 
 // Define Routers
 const indexRouter = require('../app/routes/index.js');
+const usersRouter = require('../app/routes/users.js');
+const tournamentRouter = require('../app/routes/tournaments.js');
 
 // Define Middleware Routes
 app.use(logger('dev'));
@@ -16,6 +18,8 @@ app.use(express.urlencoded({extended: false}));
 
 // Define Page Routes
 app.use('/', indexRouter);
+app.use('/users', usersRouter);
+app.use('/tournaments', tournamentRouter);
 
 // Catch Error 404
 app.use(function (req, res, next) { next(createError(404)); });
