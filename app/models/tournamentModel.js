@@ -3,10 +3,20 @@ const mongoose = require('mongoose');
 
 // Create Schema
 const tournamentSchema = mongoose.Schema({
-    name: { type: String, required: true },
+    name: { type: String,
+        unique: true,
+        required: 'Name is required',
+        trim: true },
+
     description: { type: String, required: true },
+
     owner: { type: String, required: true },
-    size: { type: Number, required: true },
+
+    size: { 
+        type: Number, 
+        required: 'Number of players is required',
+    },
+    
     teams: [{ 
         teamName: { type: String }
     }],
