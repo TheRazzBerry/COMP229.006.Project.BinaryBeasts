@@ -33,8 +33,10 @@ module.exports.list = async function(req, res, next) {
 module.exports.update = async function(req, res, next) {
     try {
         let {id} = req.params;
-        let tournament = await tournamentModel.findByIdAndUpdate(id, req.body);
-        if(!tournament) { return res.status(404).json({ message: "Tournament was not found!" }); }
+        let tournament = await tournamentModel.findById(id);
+        if (tournament.owner != auth.id) { return res.status(403).json({ message: "Not Authorized!"}) }
+        let result = await tournamentModel.findByIdAndUpdate(id, req.body);
+        if(!result) { return res.status(404).json({ message: "Tournament was not found!" }); }
         let updatedTournament = await tournamentModel.findById(id);
         res.status(200).json(updatedTournament);
         } catch (error) { next(error); }

@@ -13,13 +13,13 @@ let authController = require('../controllers/authController');
 
 // Define Method Routes
 router.get('/', (req, res, next) => { res.json({ "message" : "users.js root directory" }); });
+router.post('/signup', userController.add);
 router.post('/signin', authController.signin);
 router.get('/list', userController.list);
-router.post('/signup', userController.add);
 
-router.param('userId', userController.find);
-router.get('/get/:id', userController.read);
-
+router.get('/get/:id',
+    userController.find,
+    userController.read);
 router.put('/update/:id', 
     authController.requireSignin, 
     authController.hasAuth, 

@@ -34,8 +34,8 @@ module.exports.requireSignin = expressjwt({
 });
 
 module.exports.hasAuth = async function (req, res, next) {
-    let auth = req.auth && req.user && req.userName == req.auth.userName;
-    if (!auth) { return res.status(403).json({ message: "User is not authorized!" }); }
+    let authorized = req.auth && req.user && req.user.id == req.auth.id;
+    if (!authorized) { return res.status(403).json({ message: "User is not authorized!" }); }
     next();
 }
 
