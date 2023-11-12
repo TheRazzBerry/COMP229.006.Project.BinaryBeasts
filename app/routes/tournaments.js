@@ -9,14 +9,24 @@ const Tournament = require('../models/tournamentModel');
 
 // Define Controllers
 let tournamentController = require('../controllers/tournamentController');
+let authController = require('../controllers/authController');
 
 // Define Method Routes
 router.get('/', (req, res, next) => { res.json({ "message" : "tournaments.js root directory" }); });
 router.get('/list', tournamentController.list);
 router.get('/:id', tournamentController.find, tournamentController.read);
-router.post('/', tournamentController.add);
-router.put('/:id', tournamentController.update);
-router.delete('/:id', tournamentController.delete);
+
+router.post('/create', 
+    authController.requireSignin,
+    tournamentController.add);
+router.put('/edit/:id', 
+    authController.requireSignin,
+    authController.isAllowed,
+    tournamentController.update);
+router.delete('/:id', 
+    authController.requireSignin,
+    authController.isAllowed,
+    tournamentController.delete);
 
 // Export Module
 module.exports = router;

@@ -3,24 +3,23 @@ const mongoose = require('mongoose');
 
 // Create Schema
 const tournamentSchema = mongoose.Schema({
-    name: { type: String,
-        unique: true,
-        required: 'Name is required',
-        trim: true },
-
+    name: { type: String, required: true, trim: true },
     description: { type: String, required: true },
-
-    owner: { type: String, required: true },
-
-    size: { 
-        type: Number, 
-        required: 'Number of players is required',
-    },
-    
+    owner: { type: mongoose.Schema.Types.ObjectId, required: true, ref: 'User' },
+    size: { type: Number, required: true },
     teams: [{ 
-        teamName: { type: String }
+        teamName: { type: String } 
     }],
-    active: { type: Boolean, default: false }    
+    active: { type: Boolean, default: false }
+}, { collection: 'tournaments' });
+
+// Ensure Virtual Fields Are Serialized
+tournamentSchema.set('toJSON', {
+    virtuals: true,
+    versionKey: false,
+    transform: function(doc, ret) {
+        delete ret._id;
+    }
 });
 
 // Define Model
