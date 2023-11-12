@@ -1,94 +1,49 @@
-// models/userModel.js
-
+// Define Module Dependencies
 const mongoose = require('mongoose');
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 
+// Create Schema
 const userSchema = mongoose.Schema({
-  userName: {
-    type: String,
-    unique: true,
-    required: 'Username is required',
-    trim: true,
-  },
-  email: {
-    type: String,
-    unique: true,
-    match: [/.+\@.+\..+/, 'Please fill a valid e-mail address'],
-  },
-  hashedPass: {
-    type: String,
-    required: 'Password is required',
-  },
-  salt: {
-    type: String,
-  },
-  tokens: [
-    {
-      token: {
-        type: String,
-        required: true,
-      },
-    },
-  ],
-  created: {
-    type: Date,
-    default: Date.now,
-    immutable: true,
-  },
-  updated: {
-    type: Date,
-    default: Date.now,
-  },
-  admin: {
-    type: Boolean,
-    default: false,
-  },
-});
+    userName: { type: String, unique: true, required: true, trim: true },
+    email: { type: String, unique: true, required: true, match: [/.+\@.+\..+/, 'Invalid email!'] },
+    hashedPass: { type: String, required: true },
+    salt: { type: String },
+    created: { type: Date, default: Date.now, immutable: true },
+    updated: { type: Date, default: Date.now }
+}, { collection: 'users' });
 
+// Set 'hashedPass' Using Password Input
 userSchema.virtual('password').set(function (password) {
-  if (password.length < 8) {
-    throw new Error('Password must be at least 8 characters.');
-  } else {
-    this.salt = bcrypt.genSaltSync(10);
-    this.hashedPass = bcrypt.hashSync(password, this.salt);
-  }
+    if (password.length < 8) { throw new Error('Password must be at least 8 characters.'); }
+    else {
+        this.salt = Buffer.from(crypto.randomBytes(16).toString('base64'), 'base64');
+        this.hashedPass = this.hashPassword(password);
+    }
 });
 
-userSchema.methods.generateAuthToken = async function () {
-  const token = jwt.sign({ _id: this._id.toString() }, 'your-secret-key'); // Replace 'your-secret-key' with your actual secret key
-  this.tokens = this.tokens.concat({ token });
-  await this.save();
-  return token;
-};
+// Return A Hashed Password Using Password Input
+userSchema.methods.hashPassword = function (password) {
+    return crypto.pbkdf2Sync(password, this.salt, 10000, 64, 'sha512').toString('base64');
+}
 
-userSchema.statics.findByCredentials = async (email, password) => {
-  const user = await User.findOne({ email });
+// Compare Stored 'hashedPass' To Hashed Password Input
+userSchema.methods.authenticate = function (password) {
+    return this.hashedPass === this.hashPassword(password);
+}
 
-  if (!user) {
-    throw new Error('Invalid login credentials');
-  }
+// Ensure Virtual Fields Are Serialized
+userSchema.set('toJSON', {
+    virtuals: true,
+    versionKey:false,
+    transform: function (doc, ret) { 
+        delete ret._id;
+        delete ret.hashedPass;
+        delete ret.salt;
+    }
+});
 
-  const isPasswordMatch = await bcrypt.compare(password, user.hashedPass);
+// Define Model
+const user = mongoose.model('User', userSchema);
 
-  if (!isPasswordMatch) {
-    throw new Error('Invalid login credentials');
-  }
-
-  return user;
-};
-
-userSchema.methods.toJSON = function () {
-  const user = this;
-  const userObject = user.toObject();
-
-  delete userObject.hashedPass;
-  delete userObject.salt;
-  delete userObject.tokens;
-
-  return userObject;
-};
-
-const User = mongoose.model('User', userSchema);
-
-module.exports = User;
+// Export Model
+module.exports = user;
